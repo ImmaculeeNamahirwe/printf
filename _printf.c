@@ -1,69 +1,66 @@
 #include "main.h"
 
+void print_buffer(char buffer[], int *buff_ind);
+
 /**
-
- * _printf - works like prinf
-
- * @format: the format string
-
- * Return: number of bytes printed or -1 on error
-
+ * _printf - Printf function
+ * @format: format.
+ * Return: Printed chars.
  */
-
 int _printf(const char *format, ...)
-
 {
+	int i, printed = 0, printed_chars = 0;
+	int flags, width, precision, size, buff_ind = 0;
+	va_list list;
+	char buffer[BUFF_SIZE];
 
-        int i, total = 0;
+	if (format == NULL)
+		return (-1);
 
-        char c;
+	va_start(list, format);
 
-        va_list args;
+	for (i = 0; format && format[i] != '\0'; i++)
+	{
+		if (format[i] != '%')
+		{
+			buffer[buff_ind++] = format[i];
+			if (buff_ind == BUFF_SIZE)
+				print_buffer(buffer, &buff_ind);
+			/* write(1, &format[i], 1);*/
+			printed_chars++;
+		}
+		else
+		{
+			print_buffer(buffer, &buff_ind);
+			flags = get_flags(format, &i);
+			width = get_width(format, &i, list);
+			precision = get_precision(format, &i, list);
+			size = get_size(format, &i);
+			++i;
+			printed = handle_print(format, &i, list, buffer,
+				flags, width, precision, size);
+			if (printed == -1)
+				return (-1);
+			printed_chars += printed;
+		}
+	}
 
-        int (*print)(va_list *);
+	print_buffer(buffer, &buff_ind);
 
-        va_start(args, format);
+	va_end(list);
 
-        if (!format)
+	return (printed_chars);
+}
 
-                return (0);
+/**
+ * print_buffer - Prints the contents of the buffer if it exist
+ * @buffer: Array of chars
+ * @buff_ind: Index at which to add next char, represents the length.
+ */
+void print_buffer(char buffer[], int *buff_ind)
+{
+	if (*buff_ind > 0)
+		write(1, &buffer[0], *buff_ind);
 
-        for (i = 0; format[i] != '\0'; i++)
-
-        {
-
-                if (format[i] == '%')
-
-                {
-
-                        i++;
-
-                        c = format[i];
-
-                        if (c == '%')
-
-                        {
-
-                                total += write(1, "%", 1);
-
-                                continue;
-
-                        }
-
-                        print = get_f(c);
-
-                        total += print(&args);
-
-                }
-
-                else
-
-                        total += write(1, &format[i], 1);
-
-        }
-
-        va_end(args);
-
-        return (total);
-
+	*buff_ind = 0;
 }
