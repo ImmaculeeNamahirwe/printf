@@ -1,71 +1,44 @@
 #include "main.h"
-#include <stdlib.h>
-#include <stdio.h>
 
 /**
-
- * _printf - works like prinf
-
- * @format: the format string
-
- * Return: number of bytes printed or -1 on error
-
+ * _printf - printf function
+ * @format: const char pointer
+ * Return: b_len
  */
-
 int _printf(const char *format, ...)
-
 {
+	int (*pfunc)(va_list, flags_t *);
+	const char *p;
+	va_list arguments;
+	flags_t flags = {0, 0, 0};
 
-        int i, total = 0;
+	register int count = 0;
 
-        char c;
-
-        va_list args;
-
-        int (*print)(va_list *);
-
-        va_start(args, format);
-
-        if (!format)
-
-                return (0);
-
-        for (i = 0; format[i] != '\0'; i++)
-
-        {
-
-                if (format[i] == '%')
-
-                {
-
-                        i++;
-
-                        c = format[i];
-
-                        if (c == '%')
-
-                        {
-
-                                total += write(1, "%", 1);
-
-                                continue;
-
-                        }
-
-                        print = get_f(c);
-
-                        total += print(&args);
-
-                }
-
-                else
-
-                        total += write(1, &format[i], 1);
-
-        }
-
-        va_end(args);
-
-        return (total);
-
+	va_start(arguments, format);
+	if (!format || (format[0] == '%' && !format[1]))
+		return (-1);
+	if (format[0] == '%' && format[1] == ' ' && !format[2])
+		return (-1);
+	for (p = format; *p; p++)
+	{
+		if (*p == '%')
+		{
+			p++;
+			if (*p == '%')
+			{
+				count += _putchar('%');
+				continue;
+			}
+			while (get_flag(*p, &flags))
+				p++;
+			pfunc = get_print(*p);
+			count += (pfunc)
+				? pfunc(arguments, &flags)
+				: _printf("%%%c", *p);
+		} else
+			count += _putchar(*p);
+	}
+	_putchar(-1);
+	va_end(arguments);
+	return (count);
 }
